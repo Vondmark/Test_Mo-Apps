@@ -40,8 +40,36 @@ class ViewController: UIViewController, UITextFieldDelegate {
         }, completion: nil)
     }
     
+    
+    @IBAction func unwindSegue(_ sender: UIStoryboardSegue) {
+        
+    }
     var str:String = ""
     
+    @IBAction func alternativeButtonAction(_ sender: UIButton) {
+        if logInTextField.text == "" && passwordTextField.text == "" {
+            errorLabel.alpha = 1
+            errorLabel.text = "Заполните все поля"
+        } else {
+            let urlString = "https://html5.mo-apps.com/api/Account/Login"
+            let parameters =  ["userNick" : logInTextField.text!, "password": passwordTextField.text!]
+            self.networkService.autorizationRequest(urlString: urlString, parameters: parameters) { [weak self] (result) in
+                switch result {
+                case.success(let autorizationResponse):
+                    self?.autorizationResponse = autorizationResponse
+                    print(autorizationResponse.data)
+                    DispatchQueue.main.async {
+                        self?.str = String(autorizationResponse.data)
+                        self?.performSegue(withIdentifier: "goALT", sender: nil)
+                    }
+                case .failure(let error):
+                    print("error", error)
+                    self?.errorLabel.alpha = 1
+                    self?.errorLabel.text = "Не верный логин или пароль"
+                }
+            }
+        }
+    }
     @IBAction func autorizationButtonAction(_ sender: UIButton) {
         if logInTextField.text == "" && passwordTextField.text == "" {
             errorLabel.alpha = 1
@@ -123,6 +151,10 @@ class ViewController: UIViewController, UITextFieldDelegate {
         if segue.identifier == "goTVC" {
             let nav = segue.destination as! UINavigationController
             let destinationVC = nav.topViewController as! TableViewController
+            destinationVC.userToken = str;
+        } else if segue.identifier == "goALT" {
+            let nav = segue.destination as! UINavigationController
+            let destinationVC = nav.topViewController as! CollectionViewController
             destinationVC.userToken = str;
         }
     }
